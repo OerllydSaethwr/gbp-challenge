@@ -16,4 +16,4 @@ add_executable(GBP src/main.cc)
 target_link_libraries(GBP libGBP)
 target_include_directories(GBP PUBLIC include third_party)
 
-add_subdirectory(test)
+#add_subdirectory(test)

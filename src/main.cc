@@ -1,11 +1,13 @@
 #include <iostream>
+#include <utils.h>
+#include <random>
+#include <chrono>
+#include <iomanip>
+
 #include <gaussian.h>
 #include <factor.h>
 #include <variable.h>
 #include <factor_graph.h>
-#include <utils.h>
-#include <random>
-#include <chrono>
 std::mt19937 mt;
 
 std::vector<std::pair<double, double>> make_random_poses(int N) {
@@ -31,7 +33,7 @@ int main (int argc, char **argv) {
     }
 
     int N = atoi(argv[1]);
-    mt.seed(0);
+    mt.seed(1);
     Gaussian strong_prior = utils::make_prior(1e-8);
     Gaussian weak_prior = utils::make_prior(1e8);
 
@@ -45,7 +47,6 @@ int main (int argc, char **argv) {
         v->set_prior(i == 0 ? strong_prior : weak_prior);
     }
 
-    std::random_device rd;
     std::uniform_int_distribution<> dis(0, poses.size() - 1);
     for (size_t i = 0; i < poses.size(); ++i) {
         // Make two connection with other node
@@ -61,12 +62,12 @@ int main (int argc, char **argv) {
         double x2 = poses[k].first;
         double y2 = poses[k].second;
 
-        Factor *f = G.add_factor("f" + std::to_string(i) + "-" + std::to_string(j));
-        f->set_measurement(utils::make_measurement(x1 - x0, y1 - y0, 0.1, 0.1));
-        G.connect(f, {i, j});
-        f = G.add_factor("f" + std::to_string(i) + "-" + std::to_string(k));
-        f->set_measurement(utils::make_measurement(x2 - x0, y2 - y0, 0.1, 0.1));
-        G.connect(f, {i, k});
+        Factor *f1 = G.add_factor("f" + std::to_string(i) + "-" + std::to_string(j));
+        f1->set_measurement(utils::make_measurement(x1 - x0, y1 - y0, 0.1, 0.1));
+        G.connect(f1, {i, j});
+        Factor *f2 = G.add_factor("f" + std::to_string(i) + "-" + std::to_string(k));
+        f2->set_measurement(utils::make_measurement(x2 - x0, y2 - y0, 0.1, 0.1));
+        G.connect(f2, {i, k});
     }
 
 
@@ -74,7 +75,7 @@ int main (int argc, char **argv) {
 
     for (int i = 0; i < 1000; ++i) {
         G.iteration();
-        if (G.ARE() / N < 1e-8) { break; }
+        if (G.ARE() / N < 1e-7) { break; }
     }
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -85,8 +86,10 @@ int main (int argc, char **argv) {
     for (size_t i = 0; i < poses.size(); ++i) {
         double dx = G.v(i)->belief().mu().x() - poses[i].first;
         double dy = G.v(i)->belief().mu().y() - poses[i].second;
-        if (dx * dx + dy * dy > 1e-8) {
+        if (dx * dx + dy * dy > 1e-6) {
             std::cout << "Node " << i << " did not converge\n";
+            std::cout << "Estimated x: " << G.v(i)->belief().mu().x() << ", Actual x:  " << poses[i].first << "\n";
+            std::cout << "Estimated y: " << G.v(i)->belief().mu().y() << ", Actual y:  " << poses[i].second<< "\n";
             success = false;
         }
     }
@@ -95,6 +98,6 @@ int main (int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    std::cout << diff.count() << "\n";
+    std::cout << std::setprecision(9) << diff.count() << "\n";
     return 0;
 }
