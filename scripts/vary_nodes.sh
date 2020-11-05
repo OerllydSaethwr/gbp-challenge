@@ -1,6 +1,6 @@
 #!/bin/sh
-
-for i in 100 200 300 400 500 600 700 800 900 1000
+echo N num_iterations time_per_iteration total_time
+for i in 100 1000 10000 100000
   do
-    echo $i `./build/GBP $i`
+    echo `./build/GBP $i`
   done

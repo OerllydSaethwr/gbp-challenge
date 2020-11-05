@@ -72,14 +72,14 @@ int main (int argc, char **argv) {
 
 
     auto start = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < 1000; ++i) {
+    int num_iterations = 0;
+    for (; num_iterations < 1000; ++num_iterations) {
         G.iteration();
         if (G.ARE() / N < 1e-7) { break; }
     }
 
     auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> diff = end-start;
+    std::chrono::duration<double> diff = end - start;
 
     // Verify the result
     bool success = true;
@@ -98,6 +98,6 @@ int main (int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    std::cout << std::setprecision(9) << diff.count() << "\n";
+    std::cout << N << " " << num_iterations << " " << std::setprecision(9) << diff.count() / num_iterations << " " << diff.count() << "\n";
     return 0;
 }
