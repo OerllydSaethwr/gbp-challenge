@@ -8,6 +8,7 @@
 #include <factor.h>
 #include <variable.h>
 #include <factor_graph.h>
+#include "ittnotify.h"
 std::mt19937 mt;
 
 std::vector<std::pair<double, double>> make_random_poses(int N) {
@@ -70,6 +71,9 @@ int main (int argc, char **argv) {
         G.connect(f2, {i, k});
     }
 
+    __itt_domain* domain = __itt_domain_create("forloop");
+    __itt_string_handle* shMyTask = __itt_string_handle_create("task_handle");
+    __itt_task_begin(domain, __itt_null, __itt_null, shMyTask);
 
     auto start = std::chrono::high_resolution_clock::now();
     int num_iterations = 0;
@@ -77,6 +81,8 @@ int main (int argc, char **argv) {
         G.iteration();
         if (G.ARE() / N < 1e-7) { break; }
     }
+
+    __itt_task_end(domain);
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = end - start;
